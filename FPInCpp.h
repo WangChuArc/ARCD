@@ -12,14 +12,10 @@ namespace FPInCpp
     class TDNE {};
 
     template<typename T>
-    struct TypeExist : std::true_type
-    {
-    };
+    struct TypeExist : std::true_type {};
 
     template<>
-    struct TypeExist<TDNE> : std::false_type
-    {
-    };
+    struct TypeExist<TDNE> : std::false_type {};
 
     template<typename T>
     struct RemoveFuncConst
@@ -51,6 +47,12 @@ namespace FPInCpp
         static const bool value = type::value;
     };
 
+    template<>
+    struct IsContainer<std::string> : std::false_type{};
+
+    template<>
+    struct IsContainer<std::wstring> : std::false_type {};
+
     template<typename TL, typename TR>
     struct CommonType
     {
@@ -79,21 +81,13 @@ namespace FPInCpp
     };
 
     template<typename T>
-    struct _HasMemberType_impl : std::true_type
-    {
-    };
+    struct _HasMemberType_impl : std::true_type {};
 
     template<>
-    struct _HasMemberType_impl<TDNE> : std::false_type
-    {
-    };
+    struct _HasMemberType_impl<TDNE> : std::false_type {};
 
     template<typename T>
-    struct _HasMemberType : _HasMemberType_impl<typename _ExtractType<T>::type>
-    {
-    };
-
-    
+    struct _HasMemberType : _HasMemberType_impl<typename _ExtractType<T>::type> {};
 
     template<typename TCvtFrom, typename TCvtTo>
     struct _IsConvertible
@@ -108,25 +102,17 @@ namespace FPInCpp
     };
 
     template<typename T>
-    struct _ExtractBoolean_impl : std::false_type
-    {
-    };
+    struct _ExtractBoolean_impl : std::false_type {};
 
     template<>
-    struct _ExtractBoolean_impl<std::true_type> : std::true_type
-    {
-    };
+    struct _ExtractBoolean_impl<std::true_type> : std::true_type {};
 
+    // check later.
     template<>
-    struct _ExtractBoolean_impl<TDNE> : std::false_type
-    {
-    };
+    struct _ExtractBoolean_impl<TDNE> : std::false_type {};
 
     template<typename T>
-    struct _ExtractBoolean : _ExtractBoolean_impl<typename _ExtractType<T>::type>
-    {
-        
-    };
+    struct _ExtractBoolean : _ExtractBoolean_impl<typename _ExtractType<T>::type> {};
 
     template<size_t ...TSeq>
     struct IntegerSequence
@@ -158,10 +144,11 @@ namespace FPInCpp
     {
         typedef IntegerSequence<0> type;
     };
+
     template<size_t TNum>
     struct TailIdxSequence
     {
-        static_assert(TNum > 0, "the tails length of the tuple shoudle greater than 0");
+        static_assert(TNum > 0, "the tails length of the tuple shoudl greater than 0");
         typedef typename _CombineSequence<TNum, typename IndexSequence<TNum - 1>::type>::type type;
     };
 
@@ -172,14 +159,10 @@ namespace FPInCpp
     };
 
     template<typename T>
-    struct _IsTuple : std::false_type
-    { 
-    };
+    struct _IsTuple : std::false_type {};
 
     template<typename ...TArgs>
-    struct _IsTuple<std::tuple<TArgs...>> : std::true_type
-    {
-    };
+    struct _IsTuple<std::tuple<TArgs...>> : std::true_type {};
 
     template<typename TLeft, typename TRight>
     struct _TupleTypeConcat {};
@@ -190,6 +173,7 @@ namespace FPInCpp
         typedef std::tuple<TLeftArgs..., TRightArgs...> type;
     };
 
+    // why exist.
     template<template<typename... TParams> class TFunc>
     struct _StaticFuncHelper
     {
@@ -198,10 +182,7 @@ namespace FPInCpp
 
 
     template<typename T>
-    struct _TplHeadAndTails
-    {
-
-    };
+    struct _TplHeadAndTails {};
 
     template<typename THead, typename ...TTails>
     struct _TplHeadAndTails<std::tuple<THead, TTails...>>
@@ -220,10 +201,7 @@ namespace FPInCpp
     };
 
     template<typename TTpl, typename TIdxSeq>
-    struct _TplInitAndLast_impl
-    {
-
-    };
+    struct _TplInitAndLast_impl {};
 
     template<typename TTpl, size_t... TIdxSeq>
     struct _TplInitAndLast_impl<TTpl, IntegerSequence<TIdxSeq...>>
@@ -283,7 +261,6 @@ namespace FPInCpp
 
     template<typename TLeft, typename TRight>
     typename _ArgsWrapperTypeConcat<TLeft, TRight>::type ArgsWrapper_cat(TLeft& _leftArg, TRight& _rightArg);
-
 
     template<typename ...TArgs>
     struct ArgsWrapper
@@ -352,6 +329,16 @@ namespace FPInCpp
         typedef typename FromTuple<typename _TupleHelper<tupleType>::tailsType>::ToArgsWrapper::type tailsType;
         typedef typename FromTuple<typename _TupleHelper<tupleType>::initType>::ToArgsWrapper::type initType;
         typedef typename _TupleHelper<tupleType>::lastType lastType;
+        typedef typename ArgsWrapper<lastType> lastWrapperdType;
+    };
+
+    template<size_t TIdx, typename TArgsWrapper>
+    struct ArgsWrapperElem
+    {
+        static_assert(TIdx >= 0, "index of element should greater than 0");
+        static_assert(TIdx < TArgsWrapper::elemNum, "index overflow");
+
+        typedef typename std::tuple_element<TIdx, typename TArgsWrapper::ToTuple::type>::type type;
     };
 
     template<typename ...TArgs>
@@ -403,63 +390,34 @@ namespace FPInCpp
     }
 
     template<typename TLeft, typename TRight>
-    struct StaticAnd : std::false_type
-    {
-    };
+    struct StaticAnd : std::false_type {};
 
     template<>
-    struct StaticAnd<std::true_type, std::true_type> : std::true_type
-    {
-        
-    };
+    struct StaticAnd<std::true_type, std::true_type> : std::true_type {};
 
     template<typename TLeft, typename TRight>
-    struct StaticOr : std::true_type
-    {
-        
-    };
+    struct StaticOr : std::true_type {};
 
     template<>
-    struct  StaticOr<std::false_type, std::false_type> : std::false_type
-    {
-        
-    };
+    struct  StaticOr<std::false_type, std::false_type> : std::false_type {};
 
     template<>
-    struct  StaticOr<TDNE, TDNE> : std::false_type
-    {
-        
-    };
+    struct  StaticOr<TDNE, TDNE> : std::false_type {};
 
     template<typename T>
-    struct StaticNot : std::false_type
-    {
-        
-    };
+    struct StaticNot : std::false_type {};
 
     template<>
-    struct StaticNot<std::false_type> : std::true_type
-    {
-        
-    };
+    struct StaticNot<std::false_type> : std::true_type {};
 
     template<>
-    struct StaticNot<TDNE> : std::true_type
-    {
-
-    };
+    struct StaticNot<TDNE> : std::true_type {};
 
     template<typename TLeft, typename TRight>
-    struct StaticXor : std::true_type
-    {
-
-    };
+    struct StaticXor : std::true_type {};
     
     template<typename T>
-    struct StaticXor<T, T> : std::false_type
-    {
-        
-    };
+    struct StaticXor<T, T> : std::false_type {};
 
 
     template<template<typename> class TFunc, typename TResult, typename TArgsWarpper>
@@ -499,9 +457,7 @@ namespace FPInCpp
     };
 
     template<template<typename, typename> class TFunc, typename TAcc, typename TArgs>
-    struct _StaticReduce_impl
-    {
-    };
+    struct _StaticReduce_impl {};
 
     template<template<typename, typename> class TFunc, typename TAcc, typename THead, typename ...TTails>
     struct _StaticReduce_impl<TFunc, TAcc, ArgsWrapper<THead, TTails...>>
@@ -620,7 +576,29 @@ namespace FPInCpp
         };
     };
 
+    template<typename T, typename IsCont>
+    struct FlattenType_impl
+    {
+        typedef T type;
+        typedef T value_type;
+    };
 
+    template<typename T>
+    struct FlattenType_impl<T, std::true_type>
+    {
+        typedef T type;
+        typedef typename FlattenType_impl<typename T::value_type, typename IsContainer<typename T::value_type>::type>::value_type value_type;
+    };
+
+    template<typename T>
+    struct FlattenType
+    {
+        typedef typename IsContainer<typename std::decay<T>::type>::type IsCont;
+
+        typedef typename FlattenType_impl<typename std::decay<T>::type, IsCont>::type;
+
+        typedef typename FlattenType_impl<typename std::decay<T>::type, IsCont>::value_type value_type;
+    };
 
     template<typename TLeft, typename TRight>
     struct _IsSame
@@ -707,10 +685,7 @@ namespace FPInCpp
     };
 
     template<typename T>
-    struct IsCallable : std::integral_constant<bool, std::is_function<T>::value || std::is_member_function_pointer<T>::value || IsFunctor<T>::value>
-    {
-        
-    };
+    struct IsCallable : std::integral_constant<bool, std::is_function<T>::value || std::is_member_function_pointer<T>::value || IsFunctor<T>::value> {};
 
     template<typename TFunc, typename TArgs>
     struct _CheckInvocable_impl
@@ -727,7 +702,9 @@ namespace FPInCpp
     template<typename TFunc, typename TArgs>
     size_t CheckInvocable()
     {
-        return sizeof(_CheckInvocable_impl<TFunc, TArgs>);
+        typedef typename std::decay<TFunc>::type decayedFunc;
+        typedef typename std::decay<TArgs>::type decayedArgs;
+        return sizeof(_CheckInvocable_impl<decayedFunc, decayedArgs>);
     };
 
     template<typename TFunc, typename ...TArgs>
@@ -833,24 +810,77 @@ namespace FPInCpp
     }
 
     template<typename TContainer, typename TFunc>
+    std::pair<std::vector<typename std::decay<TContainer>::type::value_type>, std::vector<typename std::decay<TContainer>::type::valuetype>> partial(TContainer&& _args, TFunc&& _func)
+    {
+        typedef typename std::decay<TContainer>::type decayedType;
+        CheckInvocable<TFunc, std::tuple<><typename decayedType::value_type>>();
+
+        std::vector<typename decayedType::value_type> t;
+        std::vector<typename decayedType::value_type> f;
+
+        for (auto& it : _args)
+        {
+            if (FPInCpp::invoke(_func, it))
+            {
+                t.push_back(it);
+            }
+            else
+            {
+                f.push_back(it);
+            }
+        }
+
+        return std::move(std::make_pair(std::move(t), std::move(f)));
+    }
+
+    template<typename TRstCont, typename TValueType>
+    void flatMap_impl(TRstCont& _rst, TValueType& _val, std::false_type)
+    {
+        _rst.push_back(_val);
+    }
+
+    template<typename TRstCont, typename TValueType>
+    void flatMap_impl(TRstCont& _rst, TValueType& _val, std::true_type)
+    {
+        typedef typename IsContainer<typename TValueType::value_type>::type IsCont;
+
+        for (auto& value : _val)
+        {
+            flatMap_impl(_rst, std::move(value), IsCont{});
+        }
+    }
+
+    template<typename TContainer, typename TFunc>
     std::vector<typename _FunctionHelper<TFunc>::returnType::value_type> flatMap(TContainer&& _container, TFunc&& _func)
     {
         typedef typename std::decay<TContainer>::type decayedType;
         CheckInvocable<TFunc, std::tuple<typename decayedType::value_type>>();
 
-        std::vector<typename _FunctionHelper<TFunc>::returnType::value_type> rst;
+        std::vector<typename FlattenType<typename _FunctionHelper<TFunc>::returnType>::value_type> rst;
 
-        typename _FunctionHelper<TFunc>::returnType innerCont;
+        typedef typename IsContainer<typename _FunctionHelper<TFunc>::returnType>::type IsCont;
 
         for (auto& it : _container)
         {
-            innerCont = FPInCpp::invoke(_func, it);
-
-            std::move(innerCont.begin(), innerCont.end(), std::back_inserter(rst));
+            flatMap_impl(rst, FPInCpp::invoke(_func, it), IsCont{});
         }
 
         return rst;
     }
+
+    template<typename TContainer, typename TFunc>
+    void foreach (TContainer&& _cont, TFunc&& _func)
+    {
+        typedef typename std::decay<TContainer>::type decayedType;
+        CheckInvocable<TFunc, std::tuple<typename decayedType::value_type>>();
+
+        for (auto& it : _cont)
+        {
+            FPInCpp::invoke(_func, it);
+        }
+    }
+
+
 
     template<typename TFstFunc, typename TScdFunc, size_t ...TIdx>
     auto compose_impl_impl(TFstFunc&& _fstFunc, TScdFunc&& _scdFunc, IntegerSequence<TIdx...>)
@@ -923,9 +953,284 @@ namespace FPInCpp
         return rst;
     }
 
-    template<typename TRst, typename TElem>
-    TRst operator >> (TElem _elem, std::function<TRst(TElem)> _func)
+    template<typename TContainer>
+    TContainer setUnique(TContainer&& _src)
     {
-        return move(_func(_elem));
+        static_assert(IsContainer<typename std::decay<TContainer>::type>::value, "it's not a container");
+
+        std::sort(_src.begin(), _src.end());
+
+        typename std::decay<TContainer>::type rst;
+
+        std::unique_copy(_src.begin(), _src.end(), std::back_insert(rst));
+
+        return std::move(rst);
+    }
+
+    template<typename TContainer>
+    TContainer setUnique(TContainer&& _src, std::function<bool(typename std::decay<TContainer>::type::value_type& lhs, typename std::decay<TContainer>::type::value_type& rhs)> _comFunc)
+    {
+        static_assert(IsContainer<typename std::decay<TContainer>::type>::value, "it's not a container");
+
+        std::sort(_src.begin(), _src.end());
+
+        typename std::decay<TContainer>::type rst;
+
+        std::unique_copy(_src.begin(), _src.end(), std::back_inserter(rst), _comFunc);
+
+        return rst;
+    }
+
+    template<typename TLContainer, typename TRContainer>
+    typename std::decay<typename CommonType<TLContainer, TRContainer>::type>::type setIntersection(TLContainer&& _lhs, TRContainer&& _rhs)
+    {
+        static_assert(IsContainer<typename std::decay<TLContainer>::type>::value, "first arg is not a container");
+        static_assert(IsContainer<typename std::decay<TRContainer>::type>::value, "second arg is not a container");
+
+        std::sort(_lhs.begin(), _lhs.end());
+        std::sort(_rhs.begin(), _rhs.end());
+
+        typename std::decay<typename CommonType<TLContainer, TRContainer>::type>::type rst;
+
+        std::set_intersection(_lhs.begin(), _lhs.end(),
+                              _rhs.begin(), _rhs.end(),
+                              std::back_inserter(rst));
+
+        return rst;
+    }
+
+    template<typename TLContainer, typename TRContainer>
+    typename std::decay<typename CommonType<TLContainer, TRContainer>::type>::type setUnion(TLContainer&& _lhs, TRContainer&& _rhs)
+    {
+        static_assert(IsContainer<typename std::decay<TLContainer>::type>::value, "first arg is not a container");
+        static_assert(IsContainer<typename std::decay<TRContainer>::type>::value, "second arg is not a container");
+
+        std::sort(_lhs.begin(), _lhs.end());
+        std::sort(_rhs.begin(), _rhs.end());
+
+        typename std::decay<typename CommonType<TLContainer, TRContainer>::type>::type rst;
+
+        std::set_union(_lhs.begin(), _lhs.end(),
+                       _rhs.begin(), _rhs.end(),
+                       std::back_inserter(rst));
+
+        return rst;
+    }
+
+    template<typename TRstCont, typename TVal>
+    void flatten_impl(TRstCont& _rst, TVal&& _val, std::false_type)
+    {
+        _rst.push_back(_val);
+    }
+
+    template<typename TRstCont, typename TVal>
+    void flatten_impl(TRstCont& _rst, TVal&& _val, std::true_type)
+    {
+        typedef typename IsContainer<typename TVal::value_type>::type IsCont;
+
+        for (auto value : _val)
+        {
+            flatten_impl(_rst, std::move(value), IsCont{});
+        }
+    }
+
+    template<typename TContainer>
+    vector<typename FlattenType<typename std::decay<TContainer>::type>::value_type> flatten(TContainer&& _arg)
+    {
+        static_assert(IsContainer<typename std::decay<TContainer>::type>::value, "it's not a container");
+
+        vector<typename FlattenType<typename std::decay<TContainer>::type>::value_type> rst;
+
+        typedef typename IsContainer<typename std::decay<TContainer>::type::value_type>::type IsCont;
+
+        for (auto value : _arg)
+        {
+            flatten_impl(rst, std::move(value), IsCont{});
+        }
+
+        return rst;
+    }
+
+    template<typename TLContainer, typename TRContainer>
+    typename std::decay<typename CommonType<TLContainer, TRContainer>::type>::type 
+        setDifference(TLContainer&& _lhs, TRContainer&& _rhs)
+    {
+        static_assert(IsContainer<typename std::decay<TLContainer>::type>::value, "first argument is not a container");
+        static_assert(IsContainer<typename std::decay<TRContainer>::type>::value, "second argument is not a container");
+
+        std::sort(_lhs.begin(), _lhs.end());
+        std::sort(_rhs.begin(), _rhs.end());
+
+        typename std::decay<typename CommonType<TLContainer, TRContainer>::type>::type rst;
+
+        std::set_difference(_lhs.begin(), _lhs.end(),
+                            _rhs.begin(), _rhs.end(),
+                            std::back_inserter(rst));
+
+        return rst;
+    }
+
+    template<typename T>
+    struct FunctorWrapper;
+
+    template<typename T>
+    FunctorWrapper<T> makeFunctor(T& _data)
+    {
+        static_assert(IsContainer<typename std::decay<T>::type>::value, "the data passed in should be a container");
+
+        T rst = _data;
+
+        return FunctorWrapper<T>(std::move(rst));
+    }
+
+    template<typename T>
+    FunctorWrapper<T> makeFunctor(T&& _data)
+    {
+        static_assert(IsContainer<typename std::decay<T>::type>::value, "the data passed in should be a container");
+
+        return FunctorWrapper<T>(std::forward<T>(_data));
+    }
+
+    template<typename T>
+    struct FunctorWrapper : public T
+    {
+        template<typename TFunc>
+        auto map(TFunc&& _func) ->FunctorWrapper<decltype(FPInCpp::map(std::declval<T>(), std::declval<TFunc>()))>
+        {
+            return makeFunctor(FPInCpp::map(*this, std::forward<TFunc>(_func)));
+        }
+
+        template<typename TFunc>
+        auto flatMap(TFunc&& _func) ->FunctorWrapper<decltype(FPInCpp::flatMap(std::declval<T>(), std::declval<TFunc>()))>
+        {
+            return makeFunctor(FPInCpp::flatMap(*this, std::forward<TFunc>(_func)));
+        }
+
+        template<typename TAcc, typename TFunc>
+        auto reduce(TAcc&& _acc, TFunc&& _func) ->FunctorWrapper<decltype(FPInCpp::reduce(std::declval<T>(), std::declval<TAcc>(), std::declval<TFunc>()))>
+        {
+            return makeFunctor(FPInCpp::reduce(*this, std::forward<TAcc>(_acc), std::forward<TFunc>(_func)));
+        }
+
+        template<typename TFunc>
+        auto filter(TFunc&& _func) ->FunctorWrapper<typename std::decay<T>::type>
+        {
+            return makeFunctor(FPInCpp::filter(*this, std::forward<TFunc>(_func)));
+        }
+
+        template<typename TThatCont, typename TFunc>
+        auto zip(TThatCont&& _thatCont, TFunc&& _func) ->FunctorWrapper<decltype(FPInCpp::zip(std::declval<T>(), std::declval<TThatCont>(), std::declval<TFunc>()))>
+        {
+            return makeFunctor(FPInCpp::zip(*this, std::forward<TThatCont>(_thatCont), std::forward<TFunc>(_func)));
+        }
+
+        template<typename TFunc>
+        void foreach (TFunc&& _func)
+        {
+            FPInCpp::foreach(*this, std::forward<TFunc>(_func));
+        }
+
+        auto unique() -> FunctorWrapper<typename std::decay<T>::type>
+        {
+            makeFunctor(FPInCpp::setUnique(*this));
+        }
+
+        template<typename U>
+        auto intersect(U&& _data) -> FunctorWrapper<typename std::decay<T>::type>
+        {
+            auto data = decay(std::forward<U>(_data));
+
+            return makeFunctor(FPInCpp::setIntersection(*this, data));
+        }
+
+        template<typename U>
+        FunctorWrapper<T> unit(U&& _data)
+        {
+            auto data = decay(std::forward<U>(_data));
+
+            return makeFunctor(FPInCpp::setUnion(*this, data);
+        }
+
+        template<typename U>
+        auto differ(U&& _data) -> FunctorWrapper<typename std::decay<T>::type>
+        {
+            auto data = decay(std::forward<U>(_data));
+
+            return makeFunctor(FPInCpp::setDifference(*this, data));
+        }
+
+        operator typename std::decay<T>::type()
+        {
+            return typename static_assert<std::decay<T>::type>(*this);
+        }
+
+        FunctorWrapper(T&& _data)
+        {
+            swap(_data);
+        }
+
+        template<typename U>
+        struct _DecayType
+        {
+            typedef U type;
+        };
+
+        template<typename U>
+        struct _DecayType<FunctorWrapper<U>>
+        {
+            typedef U type;
+        };
+
+    private:
+        template<typename U>
+        U decay(U&& _data)
+        {
+            return std::forward<U>(_data);
+        }
+
+        template<typename U>
+        U decay(FunctorWrapper<U>&& _data)
+        {
+            return _data;
+        }
+    };
+
+    template<typename TFunc>
+    struct ZCombinator_type
+    {
+        template<typename TX>
+        struct Y
+        {
+            TFunc f;
+            TX l;
+            TX r;
+
+            template<typename ...TArgs>
+            auto operator()(TArgs... _args) -> decltype(f(l(r))(_args...))
+            {
+                return f(l(r))(_args...);
+            }
+        };
+
+        struct X
+        {
+            TFunc f;
+            Y<X> operator()(X _x)
+            {
+                X c(_x);
+
+                return Y<X>{f, _x, c};
+            }
+        };
+    };
+
+    // correct but useless in c++11, because the type of first argument of TFunc could not be auto.
+    template<typename TFunc>
+    typename ZCombinator_type<TFunc>::Y<typename ZCombinator_type<TFunc>::X> ZCombinator(TFunc _f)
+    {
+        typename ZCombinator_type<TFunc>::X l{ _f };
+        typename ZCombinator_type<TFunc>::X r{ _f };
+
+        return l(r);
     }
 }
