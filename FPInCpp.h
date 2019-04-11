@@ -5,6 +5,7 @@
 #include <tuple>
 #include <iterator>
 #include <cassert>
+#include <vector>
 
 namespace FPInCpp
 {
@@ -595,7 +596,7 @@ namespace FPInCpp
     {
         typedef typename IsContainer<typename std::decay<T>::type>::type IsCont;
 
-        typedef typename FlattenType_impl<typename std::decay<T>::type, IsCont>::type;
+        typedef typename FlattenType_impl<typename std::decay<T>::type, IsCont>::type type;
 
         typedef typename FlattenType_impl<typename std::decay<T>::type, IsCont>::value_type value_type;
     };
@@ -810,10 +811,10 @@ namespace FPInCpp
     }
 
     template<typename TContainer, typename TFunc>
-    std::pair<std::vector<typename std::decay<TContainer>::type::value_type>, std::vector<typename std::decay<TContainer>::type::valuetype>> partial(TContainer&& _args, TFunc&& _func)
+    std::pair<std::vector<typename std::decay<TContainer>::type::value_type>, std::vector<typename std::decay<TContainer>::type::value_type>> partial(TContainer&& _args, TFunc&& _func)
     {
         typedef typename std::decay<TContainer>::type decayedType;
-        CheckInvocable<TFunc, std::tuple<><typename decayedType::value_type>>();
+        CheckInvocable<TFunc, std::tuple<typename decayedType::value_type>>();
 
         std::vector<typename decayedType::value_type> t;
         std::vector<typename decayedType::value_type> f;
@@ -869,7 +870,7 @@ namespace FPInCpp
     }
 
     template<typename TContainer, typename TFunc>
-    void foreach (TContainer&& _cont, TFunc&& _func)
+    void foreach_(TContainer&& _cont, TFunc&& _func)
     {
         typedef typename std::decay<TContainer>::type decayedType;
         CheckInvocable<TFunc, std::tuple<typename decayedType::value_type>>();
@@ -934,7 +935,7 @@ namespace FPInCpp
     template<typename TLCont, typename TRCont, typename TFunc>
     std::vector<typename _FunctionHelper<TFunc>::returnType> zip(TLCont&& _leftCont, TRCont&& _rightCont, TFunc&& _func)
     {
-        CheckInvocable<TFunc, std::tuple<typename TLCont::value_type, typename TRCont::value_type>>();
+        //CheckInvocable<TFunc, std::tuple<typename TLCont::value_type, typename TRCont::value_type>>();
 
         assert(_leftCont.size() == _rightCont.size());
 
@@ -962,7 +963,7 @@ namespace FPInCpp
 
         typename std::decay<TContainer>::type rst;
 
-        std::unique_copy(_src.begin(), _src.end(), std::back_insert(rst));
+        std::unique_copy(_src.begin(), _src.end(), std::back_inserter(rst));
 
         return std::move(rst);
     }
@@ -1035,11 +1036,11 @@ namespace FPInCpp
     }
 
     template<typename TContainer>
-    vector<typename FlattenType<typename std::decay<TContainer>::type>::value_type> flatten(TContainer&& _arg)
+    std::vector<typename FlattenType<typename std::decay<TContainer>::type>::value_type> flatten(TContainer&& _arg)
     {
         static_assert(IsContainer<typename std::decay<TContainer>::type>::value, "it's not a container");
 
-        vector<typename FlattenType<typename std::decay<TContainer>::type>::value_type> rst;
+        std::vector<typename FlattenType<typename std::decay<TContainer>::type>::value_type> rst;
 
         typedef typename IsContainer<typename std::decay<TContainer>::type::value_type>::type IsCont;
 
@@ -1125,14 +1126,15 @@ namespace FPInCpp
         }
 
         template<typename TFunc>
-        void foreach (TFunc&& _func)
+        void foreach_ (TFunc&& _func)
         {
-            FPInCpp::foreach(*this, std::forward<TFunc>(_func));
+            FPInCpp::foreach_(*this, std::forward<TFunc>(_func));
         }
 
         auto unique() -> FunctorWrapper<typename std::decay<T>::type>
         {
-            makeFunctor(FPInCpp::setUnique(*this));
+            typename std::decay<T>::type& ref = *this;
+            return makeFunctor(FPInCpp::setUnique(ref));
         }
 
         template<typename U>
@@ -1148,7 +1150,7 @@ namespace FPInCpp
         {
             auto data = decay(std::forward<U>(_data));
 
-            return makeFunctor(FPInCpp::setUnion(*this, data);
+            return makeFunctor(FPInCpp::setUnion(*this, data));
         }
 
         template<typename U>
@@ -1233,4 +1235,108 @@ namespace FPInCpp
 
         return l(r);
     }
+
+    template<typename T>
+    struct Optional
+    {
+        Optional() : m_pValue(nullptr), m_bHasValue(false){};
+
+        ~Optional()
+        {
+            reset();
+        }
+
+        Optional(Optional<T>& _rhs) 
+        {
+            if (_rhs)
+            {
+                m_pValue = new T (*_rhs.m_pValue);
+                m_bHasValue = true;
+            }
+            else
+            {
+                m_pValue = nullptr;
+                m_bHasValue = false;
+            }
+        };
+
+        Optional(Optional<T>&& _rhs)
+        {
+            swap(_rhs);
+        }
+
+        Optional<T>& swap(Optional<T>& _rhs)
+        {
+            struct 
+            {
+                T* m_pValue = nullptr;
+                bool m_bHasValue = false;
+            } temp;
+
+            temp.m_bHasValue = _rhs.m_bHasValue;
+            temp.m_pValue = _rhs.m_pValue;
+
+            _rhs.m_bHasValue = m_bHasValue;
+            _rhs.m_pValue = m_pValue;
+
+            m_bHasValue = temp.m_bHasValue;
+            m_pValue = temp.m_pValue;
+
+            return *this;
+        }
+
+        Optional<T>& swap(Optional<T>&& _rhs)
+        {
+            if (_rhs)
+            {
+                // you should not destroy the value of _rhs
+                // don't call _rhs.reset()
+                m_pValue = _rhs.m_pValue;
+                _rhs.m_pValue = nullptr;
+
+                m_bHasValue = true;
+                _rhs.m_bHasValue = false;
+            }
+            else
+            {
+                reset();
+            }
+
+            return *this;
+        }
+
+        void reset()
+        {
+            if (m_pValue)
+            {
+                delete m_pValue;
+                m_pValue = nullptr;
+            }
+
+            m_bHasValue = false;
+        }
+
+        bool hasValue()
+        {
+            return m_bHasValue;
+        }
+
+        operator bool()
+        {
+            return hasValue();
+        }
+
+        T value()
+        {
+            return *m_pValue;
+        }
+
+        T valueOr(T&& _arg)
+        {
+            return m_bHasValue ? *m_pValue : T(_arg);
+        }
+
+        T* m_pValue;
+        bool m_bHasValue;
+    };
 }
